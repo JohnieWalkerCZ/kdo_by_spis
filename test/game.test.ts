@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import * as G from '../server/game.js';
-import { createStore } from '../server/store.js';
+import * as G from '../server/game.ts';
+import { createStore } from '../server/store.ts';
+import { parseClientMsg } from '../server/protocol.ts';
 
 const data = G.validateData({
   people: ['Adam', 'Bára', 'Cyril'],
@@ -28,7 +29,7 @@ test('validateData rejects duplicates and empty lists', () => {
   const d = G.validateData({ people: [' A ', 'B'], questions: [{ text: ' x ' }], settings: { hack: 1 } });
   assert.deepEqual(d.people, ['A', 'B']);
   assert.deepEqual(d.questions, [{ text: 'x' }]);
-  assert.equal(d.settings.hack, undefined);
+  assert.equal((d.settings as unknown as Record<string, unknown>).hack, undefined);
 });
 
 test('pin is 6 digits and differs from previous', () => {
@@ -43,7 +44,7 @@ test('rejoin with known id keeps identity; animals are unique', () => {
   assert.equal(Object.keys(g.players).length, 3);
   const names = Object.values(g.players).map((p) => p.name);
   assert.equal(new Set(names).size, 3);
-  assert.match(names[0], /^Anonymní /);
+  assert.match(names[0] ?? '', /^Anonymní /);
 });
 
 test('vote, change vote, late vote, wrong question', () => {
@@ -69,7 +70,7 @@ test('tick closes question at endsAt and tallies with ties', () => {
   assert.equal(G.tick(g, 19999), false);
   assert.equal(G.tick(g, 20000), true);
   assert.equal(g.phase, 'results');
-  assert.deepEqual(g.results[0].map((r) => r.rank), [1, 1, 1]);
+  assert.deepEqual(g.results[0]?.map((r) => r.rank), [1, 1, 1]);
   assert.deepEqual(G.tally({ x: 'B', y: 'B', z: 'A', w: 'C' }).map((r) => [r.person, r.rank]), [['B', 1], ['A', 2], ['C', 2]]);
 });
 
@@ -114,10 +115,11 @@ test('state survives restart; expired question resolves on load', () => {
   store.save({ game: g }, true);
 
   const loaded = createStore(dir).load().game;
-  assert.equal(loaded.votes[0][a], 'Cyril');
+  assert.ok(loaded);
+  assert.equal(loaded.votes[0]?.[a], 'Cyril');
   assert.equal(G.tick(loaded, 10_000), false); // still running
   assert.equal(G.tick(loaded, 60_000), true); // expired during "downtime"
-  assert.equal(loaded.results[0][0].person, 'Cyril');
+  assert.equal(loaded.results[0]?.[0]?.person, 'Cyril');
 
   fs.writeFileSync(path.join(dir, 'state.json'), '{broken');
   assert.equal(createStore(dir).load().game, null);
@@ -130,4 +132,15 @@ test('admin-saved data round-trips through the store', () => {
   assert.equal(store.loadData(), null);
   store.saveData(data);
   assert.deepEqual(G.validateData(createStore(dir).loadData()), data);
+});
+
+test('parseClientMsg accepts only well-formed messages', () => {
+  assert.deepEqual(parseClientMsg({ t: 'vote', pos: 1, person: 'A' }), { t: 'vote', pos: 1, person: 'A' });
+  assert.equal(parseClientMsg({ t: 'vote', pos: '1', person: 'A' }), null);
+  assert.equal(parseClientMsg({ t: 'vote', pos: 1.5, person: 'A' }), null);
+  assert.equal(parseClientMsg({ t: 'join', pin: 123456 }), null);
+  assert.equal(parseClientMsg({ t: 'action', action: 'rm -rf' }), null);
+  assert.deepEqual(parseClientMsg({ t: 'action', action: 'addTime', seconds: 'x' }), { t: 'action', action: 'addTime', seconds: undefined });
+  assert.equal(parseClientMsg(null), null);
+  assert.equal(parseClientMsg([]), null);
 });

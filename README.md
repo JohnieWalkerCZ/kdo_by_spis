@@ -41,9 +41,13 @@ Mezerník / → spustí zvýrazněnou akci, `F` = celá obrazovka, `+` = +10 s. 
 
 ```bash
 npm install
+npm run build      # client TS -> public/*.js (esbuild); `npm run dev:client` hlídá změny
 npm run dev        # KDO_HOST_KEY=dev, http://localhost:3000/host
+npm run typecheck  # tsc server + client
 npm test
 ```
+
+Server je TypeScript spouštěný přímo Node 24 (bez buildu), klient se bundluje esbuildem. Sdílené typy zpráv a stavu jsou v [shared/types.ts](shared/types.ts).
 
 Mobil na stejné Wi-Fi otevře `http://<IP počítače>:3000`. Pozor: školní Wi-Fi často zařízení mezi sebou izoluje, takže spolehlivější je nasazení na server.
 

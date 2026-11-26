@@ -4,3 +4,4 @@ data/
 .impeccable/preview/
 .impeccable/sketches/
 .impeccable/decision-direction.json
+public/*.js
