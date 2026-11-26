@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "tight-leading",
+        "value": "*",
+        "files": [
+          "public/*.html"
+        ],
+        "createdAt": "2026-11-26T10:06:03.082Z",
+        "reason": "Jaroška brand manual (supplied by user) mandates body leading 120–125 % for Clear Sans"
+      }
+    ]
+  }
+}

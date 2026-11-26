@@ -84,19 +84,9 @@ function render() {
 
 function renderWait(s) {
   showScreen('wait');
-  $('#waitEmoji').textContent = s.me.emoji;
   $('#waitName').textContent = s.me.name;
-  $('#waitName').style.color = s.me.color;
-  $('#waitPlayers').textContent = `Připojeno hráčů: ${s.players}`;
+  $('#waitPlayers').textContent = `Ve hře je ${s.players} lidí`;
 }
-
-const initials = (name) =>
-  name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
 
 function renderQuestion(s) {
   showScreen('question');
@@ -105,13 +95,14 @@ function renderQuestion(s) {
     renderedKey = key;
     pendingVote = null;
     $('#search').value = '';
-    $('#qPos').textContent = `Otázka ${s.pos + 1} / ${s.total}`;
+    $('#noMatch').hidden = true;
+    $('#qPos').textContent = `Otázka ${s.pos + 1} z ${s.total}`;
     $('#qText').textContent = s.question;
     $('#people').replaceChildren(
       ...s.people.map((p) =>
         el('li', {}, el('button', { className: 'person', type: 'button', 'aria-pressed': 'false', 'data-person': p, onclick: () => castVote(p) },
-          el('span', { className: 'initials', 'aria-hidden': 'true' }, initials(p)),
           el('span', {}, p),
+          el('span', { className: 'tag', 'aria-hidden': 'true' }, 'tvůj hlas'),
         )),
       ),
     );
@@ -122,8 +113,8 @@ function renderQuestion(s) {
   for (const b of $('#people').querySelectorAll('.person')) b.setAttribute('aria-pressed', String(b.dataset.person === chosen));
   $('#voteStatus').replaceChildren(
     ...(chosen
-      ? [document.createTextNode('Hlasuješ pro '), el('b', {}, chosen), document.createTextNode(' · můžeš změnit')]
-      : [document.createTextNode('Ťukni na jednoho člověka')]),
+      ? [document.createTextNode('Tvůj hlas: '), el('b', {}, chosen), document.createTextNode(' · do konce jde změnit')]
+      : [document.createTextNode('Ťukni na jedno jméno')]),
   );
 }
 
@@ -147,14 +138,14 @@ $('#search').addEventListener('input', () => {
   $('#noMatch').hidden = shown > 0;
 });
 
+const votesWord = (n) => (n === 1 ? 'hlas' : n >= 2 && n <= 4 ? 'hlasy' : 'hlasů');
+
 function bars(rows, mine) {
-  const max = Math.max(1, ...rows.map((r) => r.votes));
   return rows.map((r) =>
-    el('div', { className: `bar${r.rank === 1 ? ' win' : ''}${r.person === mine ? ' mine' : ''}`, style: { '--w': `${(r.votes / max) * 100}%` } },
-      el('span', { className: 'fill' }),
-      el('span', { className: 'rank' }, r.rank === 1 ? '👑' : `${r.rank}.`),
-      el('span', { className: 'name' }, r.person),
-      el('span', { className: 'votes' }, String(r.votes)),
+    el('li', { className: `${r.rank === 1 ? 'win' : ''}${r.person === mine ? ' mine' : ''}` },
+      el('span', { className: 'n' }, `${r.rank}.`),
+      el('span', { className: 'nm' }, r.person),
+      el('span', { className: 'v' }, `${r.votes} ${votesWord(r.votes)}`),
     ),
   );
 }
@@ -162,32 +153,31 @@ function bars(rows, mine) {
 function renderResults(s) {
   showScreen('results');
   renderedKey = null;
-  $('#rPos').textContent = `Výsledky · otázka ${s.pos + 1} / ${s.total}`;
+  $('#rPos').textContent = `Výsledky · otázka ${s.pos + 1} z ${s.total}`;
   $('#rText').textContent = s.question;
   const rows = s.results ?? [];
-  $('#rBars').replaceChildren(...(rows.length ? bars(rows, s.myVote) : [el('p', { className: 'muted center' }, 'Nikdo nehlasoval 🤷')]));
+  $('#rBars').replaceChildren(...(rows.length ? bars(rows, s.myVote) : [el('li', {}, el('span'), el('span', { className: 'nm' }, 'Nikdo nehlasoval.'))]));
   const won = rows.some((r) => r.rank === 1 && r.person === s.myVote);
+  $('#rMine').classList.toggle('hit', won);
   $('#rMine').textContent = s.myVote
-    ? `Tvůj tip: ${s.myVote}${won ? ' — trefa! 🎯' : ''}`
+    ? won ? `Trefa! Tipoval/a jsi ${s.myVote}.` : `Tvůj tip: ${s.myVote}`
     : 'Tentokrát jsi nehlasoval/a.';
 }
 
 function renderFinal(s) {
   showScreen('final');
   const f = s.final;
-  $('#fChamp').textContent = f.champions.length ? `👑 Hvězda večera: ${f.champions.join(', ')}` : 'Žádné výsledky';
-  $('#fHits').textContent = `Trefil/a jsi vítěze ${f.hits}× z ${f.answered} hlasování.`;
+  $('#fChamp').textContent = f.champions.length ? f.champions.join(' & ') : '—';
+  $('#fHits').textContent = `Vítěze jsi trefil/a ${f.hits}× z ${f.answered}.`;
 }
 
 // ---------------- countdown loop ----------------
 function frame() {
   const s = current;
   if (s?.phase === 'question' && s.endsAt) {
-    const left = remaining(s.endsAt);
-    $('#qSecs').textContent = `${left} s`;
-    $('#qBar').classList.toggle('low', left <= 5);
-    const frac = (s.endsAt - clock.now()) / (s.duration * 1000);
-    $('#qBar').firstElementChild.style.transform = `scaleX(${Math.min(1, Math.max(0, frac))})`;
+    $('#qSecs').textContent = String(remaining(s.endsAt));
+    const frac = Math.min(1, Math.max(0, (s.endsAt - clock.now()) / (s.duration * 1000)));
+    $('#qBar').firstElementChild.style.width = `${frac * 100}%`;
   }
   requestAnimationFrame(frame);
 }

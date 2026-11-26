@@ -1,3 +1,6 @@
 node_modules/
 data/
 .env
+.impeccable/preview/
+.impeccable/sketches/
+.impeccable/decision-direction.json

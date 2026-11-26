@@ -3,70 +3,68 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#120b24">
+  <meta name="theme-color" content="#141112">
   <title>Kdo by nejspíš…</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/kapitan-medium.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <script type="module" src="app.js"></script>
 </head>
 <body>
-  <div class="conn" id="conn" hidden>Připojování…</div>
+  <div class="conn" id="conn" hidden>Spojení se ztratilo, připojuji znovu…</div>
 
   <div class="player">
     <section data-screen="join">
       <div class="hero">
-        <h1 class="logo center">Kdo by<br><em>nejspíš…</em></h1>
-        <form id="joinForm" class="stack" autocomplete="off">
-          <label class="muted center" for="pin">Zadej PIN z projektoru</label>
-          <input id="pin" class="input pin-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
+        <h1 class="head big ruled">Kdo by nejspíš…</h1>
+        <form id="joinForm" class="stack" autocomplete="off" novalidate>
+          <label class="label" for="pin">PIN z plátna</label>
+          <input id="pin" class="input pin-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" aria-describedby="joinError" required>
           <button class="btn" type="submit">Připojit se</button>
-          <p class="error center" id="joinError" role="alert"></p>
+          <p class="error" id="joinError" role="alert"></p>
         </form>
       </div>
     </section>
 
     <section data-screen="wait" hidden>
-      <div class="hero center">
-        <div class="big-emoji" id="waitEmoji"></div>
+      <div class="hero">
         <div>
-          <p class="muted">Jsi ve hře jako</p>
-          <h2 id="waitName" style="margin:.2em 0 0"></h2>
+          <p class="label">Jsi ve hře jako</p>
+          <h2 class="head me ruled" id="waitName"></h2>
         </div>
-        <p class="card"><span class="waiting-dots">Koukej na projektor, hra brzy začne</span></p>
-        <p class="muted" id="waitPlayers"></p>
+        <p class="muted">Sleduj plátno, první otázka přijde za chvíli. Hlasování je anonymní.</p>
+        <p class="label" id="waitPlayers"></p>
       </div>
     </section>
 
     <section data-screen="question" hidden>
       <header class="qhead">
-        <div class="meta">
-          <span id="qPos"></span>
-          <span class="secs" id="qSecs"></span>
-        </div>
-        <div class="timebar" id="qBar"><i></i></div>
-        <h2 class="qtext" id="qText"></h2>
-        <input id="search" class="input" type="search" placeholder="Hledat jméno…" enterkeyhint="search" autocomplete="off">
+        <div class="meta"><span id="qPos"></span><span class="secs" id="qSecs"></span></div>
+        <h2 class="head qtext ruled" id="qText"></h2>
+        <div class="track" id="qBar" aria-hidden="true"><i></i></div>
+        <input id="search" class="input" type="search" placeholder="Najít jméno" aria-label="Najít jméno" enterkeyhint="search" autocomplete="off">
       </header>
       <ul class="people" id="people"></ul>
-      <p class="muted center" id="noMatch" hidden>Nikdo takový</p>
+      <p class="muted" id="noMatch" hidden>Takové jméno ve třídě není.</p>
       <footer class="votebar" id="voteStatus" aria-live="polite"></footer>
     </section>
 
     <section data-screen="results" hidden>
-      <p class="muted" id="rPos"></p>
-      <h2 class="qtext" id="rText"></h2>
-      <div class="bars" id="rBars"></div>
-      <p class="card center" id="rMine"></p>
-      <p class="muted center waiting-dots">Čekej na další otázku</p>
+      <div class="meta"><span id="rPos"></span></div>
+      <h2 class="head qtext" id="rText"></h2>
+      <ol class="board" id="rBars"></ol>
+      <p class="note" id="rMine"></p>
+      <p class="label">Další otázka za chvíli</p>
     </section>
 
     <section data-screen="final" hidden>
-      <div class="hero center">
-        <div class="big-emoji">🎓</div>
-        <h1 class="logo">Konec hry!</h1>
-        <p class="card" id="fChamp"></p>
-        <p class="card" id="fHits"></p>
-        <p class="muted">Díky za hraní a ať se stužkovák vydaří! 🎉</p>
+      <div class="hero">
+        <div>
+          <p class="label">Hvězda večera</p>
+          <h1 class="head big ruled" id="fChamp"></h1>
+        </div>
+        <p class="note" id="fHits"></p>
+        <p class="muted">Díky za hraní a ať se stužkovák vydaří.</p>
       </div>
     </section>
   </div>

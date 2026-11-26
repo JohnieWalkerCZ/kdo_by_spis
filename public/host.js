@@ -129,22 +129,23 @@ function renderLobby() {
   $('#joinUrl').textContent = publicUrl.replace(/^https?:\/\//, '');
   $('#lobbyPin').textContent = s.pin.replace(/(\d{3})(\d{3})/, '$1 $2');
   $('#lobbyCount').textContent = s.players.length;
-  // append only new bubbles so existing ones don't re-animate
+  // append only new nameplates so existing ones don't re-animate
   const box = $('#bubbles');
   if (box.dataset.pin !== s.pin) {
     box.replaceChildren();
     box.dataset.pin = s.pin;
   }
   for (const p of s.players.slice(box.children.length)) {
-    box.append(el('span', { className: 'badge' }, el('span', { className: 'emoji', style: { '--c': p.color } }, p.emoji), p.name));
+    box.append(el('span', {}, p.name));
   }
   $('#lobbyHint').hidden = s.players.length > 0;
-  controls([{ label: 'Spustit hru ▶', primary: true, fn: () => action('next') }]);
+  controls([{ label: 'Spustit hru', primary: true, fn: () => action('next') }]);
 }
+
 
 function renderQuestion() {
   showScreen('question');
-  $('#qPos').textContent = `Otázka ${s.pos + 1} / ${s.total}`;
+  $('#qPos').textContent = `Otázka ${s.pos + 1} z ${s.total}`;
   $('#qPin').textContent = s.pin;
   $('#qText').textContent = s.question.text;
   $('#voted').textContent = s.voted;
@@ -162,32 +163,29 @@ function renderResults() {
   const last = s.pos + 1 >= s.total;
   controls([
     { label: 'Zopakovat otázku', fn: () => confirm('Spustit tuto otázku znovu? Hlasy se smažou.') && action('repeat') },
-    { label: last ? 'Finále 🏆' : 'Další otázka ▶', primary: true, fn: () => action('next') },
+    { label: last ? 'Finále' : 'Další otázka', primary: true, fn: () => action('next') },
   ]);
   const key = `${s.pos}|${s.startedAt}`;
   if (key === resultsKey) return; // don't replay the reveal on unrelated updates
   resultsKey = key;
   gong();
 
-  $('#rPos').textContent = `Výsledky · otázka ${s.pos + 1} / ${s.total}`;
+  $('#rPos').textContent = `Výsledky · otázka ${s.pos + 1} z ${s.total}`;
   $('#rPin').textContent = s.pin;
   $('#rText').textContent = s.question.text;
   const rows = s.results ?? [];
-  if (!rows.length) return $('#rBars').replaceChildren(el('p', { className: 'empty' }, 'Nikdo nehlasoval 🤷'));
-  const max = Math.max(...rows.map((r) => r.votes));
-  const step = 0.7;
-  // reveal from the bottom up: last row first, winner last
+  if (!rows.length) return $('#rBars').replaceChildren(el('p', { className: 'empty' }, 'Nikdo nehlasoval.'));
+  const step = 0.6;
+  // reveal from the lowest rank up; the winner's row lands last
   $('#rBars').replaceChildren(
     ...rows.map((r, i) =>
-      el('div', { className: `bar${r.rank === 1 ? ' win' : ''}`, style: { '--w': `${(r.votes / max) * 100}%`, '--delay': `${(rows.length - 1 - i) * step}s` } },
-        el('span', { className: 'fill' }),
-        el('span', { className: 'rank' }, `${r.rank}.`),
-        el('span', { className: 'name' }, r.person),
-        el('span', { className: 'votes' }, `${r.votes} ${votesWord(r.votes)}`),
+      el('li', { className: r.rank === 1 ? 'win' : '', style: { '--delay': `${(rows.length - 1 - i) * step + (r.rank === 1 ? 0.5 : 0)}s` } },
+        el('span', { className: 'n' }, `${r.rank}.`),
+        el('span', { className: 'nm' }, r.person),
+        el('span', { className: 'v' }, `${r.votes} ${votesWord(r.votes)}`),
       ),
     ),
   );
-  setTimeout(confetti, rows.length * step * 1000);
 }
 
 const votesWord = (n) => (n === 1 ? 'hlas' : n >= 2 && n <= 4 ? 'hlasy' : 'hlasů');
@@ -196,37 +194,32 @@ function renderFinal(prev) {
   showScreen('final');
   controls([
     { label: 'Stáhnout výsledky', fn: downloadCurrent },
-    { label: 'Zavřít hru', primary: true, fn: () => confirm('Zavřít hru? Výsledky zůstanou v historii.') && action('closeGame') },
+    { label: 'Zavřít hru', primary: true, fn: () => confirm('Zavřít hru? Výsledky zůstanou v archivu.') && action('closeGame') },
   ]);
   if (prev?.phase === 'final' && $('#fList').children.length) return;
   const sum = s.summary;
   $('#fChamp').textContent = sum.champions.join(' & ') || '—';
   $('#fChampSub').textContent = sum.championWins
-    ? `vyhrál/a ${sum.championWins} ${sum.championWins === 1 ? 'otázku' : sum.championWins <= 4 ? 'otázky' : 'otázek'}`
+    ? `Vyhrál/a ${sum.championWins} ${sum.championWins === 1 ? 'otázku' : sum.championWins <= 4 ? 'otázky' : 'otázek'} z ${sum.questions.length}.`
     : '';
   $('#fList').replaceChildren(
     ...sum.questions.map((q, i) =>
-      el('div', { className: 'card', style: { 'animation-delay': `${i * 0.08}s` } },
-        el('div', { className: 'q' }, q.text),
-        el('div', { className: 'w' }, q.winners.length ? q.winners.join(', ') : '—'),
+      el('li', { style: { '--delay': `${0.3 + i * 0.07}s` } },
+        el('span', { className: 'q' }, q.text),
+        el('span', { className: 'w' }, q.winners.length ? q.winners.join(', ') : '—'),
       ),
     ),
   );
-  confetti();
 }
 
 // ---------------- countdown + sound ----------------
-
-const CIRC = 2 * Math.PI * 52;
-$('#ringProg').style.strokeDasharray = CIRC;
 
 function frame() {
   if (s?.phase === 'question' && s.endsAt) {
     const left = remaining(s.endsAt);
     $('#ringNum').textContent = left;
-    $('#ring').classList.toggle('low', left <= 5);
     const frac = Math.min(1, Math.max(0, (s.endsAt - clock.now()) / (s.duration * 1000)));
-    $('#ringProg').style.strokeDashoffset = CIRC * (1 - frac);
+    $('#ringFill').style.width = `${frac * 100}%`;
     const beepKey = `${s.startedAt}|${left}`;
     if (left > 0 && left <= 5 && lastBeep !== beepKey) {
       lastBeep = beepKey;
@@ -258,28 +251,6 @@ function gong() {
   tone(523, 0.5, 'triangle');
   tone(659, 0.5, 'triangle', 0.12);
   tone(784, 0.9, 'triangle', 0.24);
-}
-
-function confetti() {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const colors = ['#ffc53d', '#ff5fa2', '#3ddc97', '#7aa2ff', '#ffffff'];
-  const box = el('div', { className: 'confetti', 'aria-hidden': 'true' });
-  for (let i = 0; i < 120; i++) {
-    box.append(
-      el('i', {
-        style: {
-          left: `${Math.random() * 100}%`,
-          background: colors[i % colors.length],
-          '--x': `${(Math.random() - 0.5) * 300}px`,
-          '--r': `${(Math.random() - 0.5) * 1440}deg`,
-          '--d': `${2.5 + Math.random() * 2.5}s`,
-          '--delay': `${Math.random() * 0.8}s`,
-        },
-      }),
-    );
-  }
-  document.body.append(box);
-  setTimeout(() => box.remove(), 6000);
 }
 
 // ---------------- history / downloads ----------------
