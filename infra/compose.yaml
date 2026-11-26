@@ -6,7 +6,7 @@ services:
     pull_policy: build
     restart: unless-stopped
     ports:
-      - "${KDO_WEB_PORT:-6768}:3000"
+      - "${KDO_WEB_PORT:-6767}:3000"
     environment:
       KDO_HOST_KEY: ${KDO_HOST_KEY:?Set KDO_HOST_KEY (projector password)}
       KDO_PUBLIC_URL: ${KDO_PUBLIC_URL:-}

@@ -58,7 +58,7 @@ Stejně jako ostatní stacky: **Stacks → Add stack → Repository**, Compose p
 | Proměnná | Výchozí | Popis |
 |---|---|---|
 | `KDO_HOST_KEY` | – (povinné) | heslo pro `/host` |
-| `KDO_WEB_PORT` | `6768` | port na hostu |
+| `KDO_WEB_PORT` | `6767` | port na hostu |
 | `KDO_PUBLIC_URL` | – | veřejná adresa pro QR kód, např. `https://kdoby.example.cz` |
 | `KDO_TRUST_PROXY` | `false` | `true` za reverse proxy (rate limit PINu podle `X-Forwarded-For`) |
 
