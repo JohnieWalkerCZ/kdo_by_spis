@@ -1,6 +1,6 @@
 // Admin: edit people, questions and settings. Auth = the projector password (same localStorage key).
 import type { DataQuestion, GameData } from '../shared/types.ts';
-import { $, showScreen, themeButtons, czPlural } from './net.ts';
+import { $, showScreen, themeButtons, czPlural, confirmDialog } from './net.ts';
 
 /** What the form holds: may be invalid (empty numbers), the server has the last word. */
 interface Draft {
@@ -158,7 +158,7 @@ $('#addQ').addEventListener('click', () => {
   refresh();
 });
 
-questionsList.addEventListener('click', (e) => {
+questionsList.addEventListener('click', async (e) => {
   const btn = e.target instanceof Element ? e.target.closest<HTMLElement>('[data-act]') : null;
   const li = btn?.closest('li');
   if (!btn || !li) return;
@@ -167,7 +167,7 @@ questionsList.addEventListener('click', (e) => {
   if (act === 'down' && li.nextElementSibling) li.nextElementSibling.after(li);
   if (act === 'del') {
     const text = $<HTMLInputElement>('.qtext-in', li).value.trim();
-    if (text && !confirm(`Smazat otázku „${text}“?`)) return;
+    if (text && !(await confirmDialog(`Smazat otázku „${text}“?`, 'Smazat'))) return;
     li.remove();
   }
   btn.focus();

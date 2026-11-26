@@ -1,5 +1,5 @@
 import type { GameListing, HostActionMsg, HostGame } from '../shared/types.ts';
-import { connect, keepAwake, clock, $, el, showScreen, remaining, themeButtons, czPlural, votesWord } from './net.ts';
+import { alertDialog, confirmDialog, connect, keepAwake, clock, $, el, showScreen, remaining, themeButtons, czPlural, votesWord } from './net.ts';
 
 const KEY_STORE = 'kdo-host-key';
 const SOUND_STORE = 'kdo-host-sound';
@@ -77,10 +77,10 @@ $('#loginForm').addEventListener('submit', (e) => {
 
 $('#newGame').addEventListener('click', () => action('newGame'));
 $('#menuNew').addEventListener('click', () => {
-  if (confirm('Začít novou hru s novým PINem? Rozehraná hra se uloží do historie.')) action('newGame');
+  void confirmDialog('Začít novou hru s novým PINem? Rozehraná hra se uloží do historie.', 'Nová hra').then((ok) => ok && action('newGame'));
 });
 $('#menuFinish').addEventListener('click', () => {
-  if (confirm('Ukončit hru a ukázat finální výsledky?')) action('finish');
+  void confirmDialog('Ukončit hru a ukázat finální výsledky?', 'Ukončit hru').then((ok) => ok && action('finish'));
 });
 optAuto.addEventListener('change', () => net.send({ t: 'action', action: 'settings', autoEndWhenAllVoted: optAuto.checked }));
 optSound.checked = read(SOUND_STORE) !== 'off';
@@ -113,7 +113,7 @@ function controls(buttons: Control[]): void {
 }
 
 document.addEventListener('keydown', (e) => {
-  if ((e.target instanceof Element && e.target.closest('input, textarea')) || e.repeat) return;
+  if ((e.target instanceof Element && e.target.closest('input, textarea')) || e.repeat || document.querySelector('dialog[open]')) return;
   if ((e.key === ' ' || e.key === 'ArrowRight') && primary) {
     e.preventDefault();
     primary();
@@ -177,7 +177,7 @@ function renderQuestion(g: HostGame): void {
   controls([
     { label: '+10 s', fn: () => addTime() },
     { label: 'Ukončit hlasování', primary: true, fn: () => action('endNow') },
-    { label: 'Přeskočit otázku', fn: () => confirm('Přeskočit otázku bez výsledků?') && action('skip') },
+    { label: 'Přeskočit otázku', fn: () => void confirmDialog('Přeskočit otázku bez výsledků?', 'Přeskočit').then((ok) => ok && action('skip')) },
   ]);
 }
 
@@ -185,7 +185,7 @@ function renderResults(g: HostGame): void {
   showScreen('results');
   const last = g.pos + 1 >= g.total;
   controls([
-    { label: 'Zopakovat otázku', fn: () => confirm('Spustit tuto otázku znovu? Hlasy se smažou.') && action('repeat') },
+    { label: 'Zopakovat otázku', fn: () => void confirmDialog('Spustit tuto otázku znovu? Hlasy se smažou.', 'Zopakovat').then((ok) => ok && action('repeat')) },
     { label: last ? 'Finále' : 'Další otázka', primary: true, fn: () => action('next') },
   ]);
   const key = `${g.pos}|${g.startedAt}`;
@@ -241,7 +241,7 @@ function renderFinal(g: HostGame, prev: HostGame | null): void {
   showScreen('final');
   controls([
     { label: 'Stáhnout výsledky', fn: () => downloadCurrent(g.pin) },
-    { label: 'Zavřít hru', primary: true, fn: () => confirm('Zavřít hru? Výsledky zůstanou v archivu.') && action('closeGame') },
+    { label: 'Zavřít hru', primary: true, fn: () => void confirmDialog('Zavřít hru? Výsledky zůstanou v archivu.', 'Zavřít hru').then((ok) => ok && action('closeGame')) },
   ]);
   const list = $('#fList');
   if (prev?.phase === 'final' && list.children.length) return;
@@ -338,7 +338,7 @@ const downloadCurrent = (pin: string): Promise<void> => download('/api/current',
 
 async function download(url: string, name: string): Promise<void> {
   const res = await fetch(url, { headers: { 'x-host-key': hostKey ?? '' } });
-  if (!res.ok) return alert('Stažení selhalo.');
+  if (!res.ok) return alertDialog('Stažení selhalo.');
   const a = el('a', { href: URL.createObjectURL(await res.blob()), download: name });
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);

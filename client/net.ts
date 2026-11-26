@@ -154,6 +154,31 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Props =
   return e;
 }
 
+/** Modal dialog (native <dialog>: focus trap, Esc, backdrop). Resolves true on the OK button, false on cancel/Esc. */
+function modal(message: string, ok: string, cancel: string | null): Promise<boolean> {
+  return new Promise((resolve) => {
+    const dlg = el('dialog', { className: 'modal' });
+    const done = (result: boolean) => () => {
+      dlg.close();
+      dlg.remove();
+      resolve(result);
+    };
+    const buttons = [
+      cancel ? el('button', { className: 'btn small ghost', type: 'button', autofocus: true, onclick: done(false) }, cancel) : null,
+      el('button', { className: 'btn small', type: 'button', autofocus: !cancel, onclick: done(true) }, ok),
+    ];
+    dlg.append(el('p', {}, message), el('div', { className: 'actions' }, ...buttons));
+    dlg.addEventListener('close', done(false)); // Esc
+    document.body.append(dlg);
+    dlg.showModal();
+  });
+}
+
+/** Replacement for window.confirm. Cancel is focused by default: Enter never confirms by accident. */
+export const confirmDialog = (message: string, ok = 'Potvrdit'): Promise<boolean> => modal(message, ok, 'Zrušit');
+/** Replacement for window.alert. */
+export const alertDialog = (message: string): Promise<void> => modal(message, 'OK', null).then(() => undefined);
+
 /** Remaining seconds (ceil) until endsAt using server clock. */
 export const remaining = (endsAt: number): number => Math.max(0, Math.ceil((endsAt - clock.now()) / 1000));
 

@@ -400,3 +400,17 @@ button, input, textarea { font: inherit; color: inherit; }
   .lobby .pinbox { grid-column: auto; }
   .desk .head, .lobby .title { font-size: 3.6em; }
 }
+
+/* modal dialogs (confirm / alert replacement) */
+.modal {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 1.1rem;
+}
+.modal::backdrop { background: rgb(0 0 0 / .65); }
+.modal p { margin: 0 0 1.5rem; line-height: 1.35; }
+.modal .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; }
