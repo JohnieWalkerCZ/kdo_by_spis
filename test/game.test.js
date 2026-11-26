@@ -20,8 +20,15 @@ function setup() {
 }
 
 test('validateData rejects duplicates and empty lists', () => {
-  assert.throws(() => G.validateData({ people: ['A', 'A'], questions: [{ text: 'x' }] }), /duplicitní/);
-  assert.throws(() => G.validateData({ people: ['A', 'B'], questions: [] }), /questions/);
+  assert.throws(() => G.validateData({ people: ['A', 'A'], questions: [{ text: 'x' }] }), /dvakrát/);
+  assert.throws(() => G.validateData({ people: ['A', 'B'], questions: [] }), /otázku/);
+  assert.throws(() => G.validateData({ people: ['A', 'B'], questions: [{ text: 'x', time: 2 }] }), /5–600/);
+  assert.throws(() => G.validateData({ people: ['A', 'B'], questions: [{ text: 'x' }], settings: { resultsTop: 0 } }), /1–10/);
+  // names are trimmed, unknown settings dropped
+  const d = G.validateData({ people: [' A ', 'B'], questions: [{ text: ' x ' }], settings: { hack: 1 } });
+  assert.deepEqual(d.people, ['A', 'B']);
+  assert.deepEqual(d.questions, [{ text: 'x' }]);
+  assert.equal(d.settings.hack, undefined);
 });
 
 test('pin is 6 digits and differs from previous', () => {
@@ -115,4 +122,12 @@ test('state survives restart; expired question resolves on load', () => {
   fs.writeFileSync(path.join(dir, 'state.json'), '{broken');
   assert.equal(createStore(dir).load().game, null);
   assert.ok(fs.readdirSync(dir).some((f) => f.startsWith('state.json.broken-')));
+});
+
+test('admin-saved data round-trips through the store', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kdo-'));
+  const store = createStore(dir);
+  assert.equal(store.loadData(), null);
+  store.saveData(data);
+  assert.deepEqual(G.validateData(createStore(dir).loadData()), data);
 });

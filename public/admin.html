@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#141112">
+  <title>Kdo by nejspíš… · nastavení</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="admin.js"></script>
+</head>
+<body>
+  <div class="admin">
+    <header class="admin-top">
+      <h1 class="head ruled">Hráči a otázky</h1>
+      <span class="row">
+        <button class="ib" id="themeBtn" type="button" aria-label="Přepnout světlé a tmavé zobrazení" title="Světlé / tmavé zobrazení"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+        <a class="btn small ghost" href="/host">Zpět na projektor</a>
+      </span>
+    </header>
+
+    <section data-screen="login">
+      <form id="loginForm" class="stack admin-login">
+        <label class="label" for="key">Heslo projektoru</label>
+        <input id="key" class="input" type="password" autocomplete="current-password" required>
+        <button class="btn" type="submit">Přihlásit</button>
+        <p class="error" id="loginError" role="alert"></p>
+      </form>
+    </section>
+
+    <section data-screen="loading" hidden><p class="muted">Načítám…</p></section>
+
+    <form data-screen="editor" id="editor" hidden novalidate>
+      <p class="muted admin-note">Změny platí od další nové hry. Rozehraná hra pokračuje se svými otázkami.</p>
+
+      <fieldset class="block">
+        <legend class="head">Hráči</legend>
+        <label class="label" for="people">Jedno jméno na řádek · <span id="peopleCount">0</span></label>
+        <textarea id="people" class="input area" rows="14" spellcheck="false"></textarea>
+      </fieldset>
+
+      <fieldset class="block">
+        <legend class="head">Otázky · <span id="qCount">0</span></legend>
+        <ol class="qlist" id="questions"></ol>
+        <button class="btn ghost" type="button" id="addQ">Přidat otázku</button>
+      </fieldset>
+
+      <fieldset class="block">
+        <legend class="head">Nastavení</legend>
+        <div class="grid2">
+          <label class="field"><span class="label">Výchozí čas na otázku (s)</span><input id="defaultTime" class="input" type="number" min="5" max="600" step="1" inputmode="numeric"></label>
+          <label class="field"><span class="label">Kolik míst ukázat ve výsledcích</span><input id="resultsTop" class="input" type="number" min="1" max="10" step="1" inputmode="numeric"></label>
+        </div>
+        <label class="check"><input type="checkbox" id="shuffleQuestions"> Náhodné pořadí otázek v každé hře</label>
+        <label class="check"><input type="checkbox" id="autoEndWhenAllVoted"> Ukončit otázku hned, když hlasují všichni</label>
+      </fieldset>
+
+      <footer class="savebar">
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+        <button class="btn" type="submit" id="save" disabled>Uložit</button>
+      </footer>
+    </form>
+  </div>
+
+  <template id="qrow">
+    <li class="qrow">
+      <span class="qn"></span>
+      <input class="input qtext-in" type="text" maxlength="200" aria-label="Text otázky" placeholder="Kdo by nejspíš…">
+      <input class="input qtime" type="number" min="5" max="600" step="1" inputmode="numeric" aria-label="Čas v sekundách" title="Čas v sekundách (prázdné = výchozí)">
+      <span class="qbtns">
+        <button class="ib" type="button" data-act="up" aria-label="Posunout nahoru"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+        <button class="ib" type="button" data-act="down" aria-label="Posunout dolů"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button class="ib danger" type="button" data-act="del" aria-label="Smazat otázku"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </span>
+    </li>
+  </template>
+</body>
+</html>

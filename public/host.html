@@ -31,6 +31,10 @@
         <div class="desk">
           <h1 class="head ruled">Kdo by nejspíš…</h1>
           <button class="btn" id="newGame">Nová hra</button>
+          <div class="row">
+            <a class="btn ghost" href="/admin">Upravit hráče a otázky</a>
+            <button class="btn ghost" id="themeToggleHome" type="button">Světlé zobrazení</button>
+          </div>
           <div class="archive">
             <h2>Odehrané hry</h2>
             <div class="history" id="history"><p class="muted">Zatím žádné.</p></div>
@@ -69,7 +73,8 @@
       <section data-screen="results" hidden>
         <div class="meta"><span id="rPos"></span><span>PIN <span id="rPin"></span></span></div>
         <h1 class="head results-q" id="rText"></h1>
-        <ol class="ranks" id="rBars"></ol>
+        <div class="spot" id="rWin" aria-live="polite"></div>
+        <ol class="runners" id="rBars"></ol>
       </section>
 
       <section data-screen="final" hidden>
@@ -79,6 +84,7 @@
             <div class="label">Hvězda večera</div>
             <h1 class="head ruled" id="fChamp"></h1>
             <p id="fChampSub"></p>
+            <ol class="podium" id="fPodium"></ol>
           </div>
           <ol class="credits" id="fList"></ol>
         </div>
@@ -88,6 +94,7 @@
     <nav class="controls" id="controls" hidden aria-label="Ovládání hry">
       <span id="ctlPhase" class="row"></span>
       <span class="spacer"></span>
+      <button class="btn small ghost" id="themeToggle" type="button" aria-pressed="false">Světlé zobrazení</button>
       <label><input type="checkbox" id="optSound" checked> Zvuk</label>
       <label><input type="checkbox" id="optAuto"> Ukončit, když hlasují všichni</label>
       <button class="btn small ghost" id="fullscreen" title="Celá obrazovka (F)" aria-label="Celá obrazovka">

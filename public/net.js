@@ -1,4 +1,43 @@
-// Shared by player + host: WebSocket with auto-reconnect, server clock offset, wake lock.
+// Shared by player, host and admin: WebSocket with auto-reconnect, server clock offset, wake lock, theme.
+
+// Light/dark is each device's own choice, remembered only in that browser. Default dark (darkened hall).
+const THEME_KEY = 'kdo-theme';
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#ffffff' : '#141112');
+}
+function storedTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+applyTheme(storedTheme());
+
+/** Wire buttons that flip this device between light and dark. `label(theme)` renders the button text. */
+export function themeButtons(buttons, label) {
+  const paint = () => {
+    const t = document.documentElement.dataset.theme;
+    for (const b of buttons) {
+      b.setAttribute('aria-pressed', String(t === 'light'));
+      if (label) b.textContent = label(t);
+    }
+  };
+  for (const b of buttons) {
+    b.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      applyTheme(next);
+      try {
+        localStorage.setItem(THEME_KEY, next);
+      } catch {
+        /* private mode: applies for this visit only */
+      }
+      paint();
+    });
+  }
+  paint();
+}
 
 export function connect({ onOpen, onMessage, onStatus }) {
   let ws;

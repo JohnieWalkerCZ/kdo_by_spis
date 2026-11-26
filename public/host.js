@@ -1,4 +1,4 @@
-import { connect, keepAwake, clock, $, el, showScreen, remaining } from './net.js';
+import { connect, keepAwake, clock, $, el, showScreen, remaining, themeButtons } from './net.js';
 
 const KEY_STORE = 'kdo-host-key';
 const SOUND_STORE = 'kdo-host-sound';
@@ -76,6 +76,8 @@ $('#optAuto').addEventListener('change', (e) => action('settings', { autoEndWhen
 $('#optSound').checked = read(SOUND_STORE) !== 'off';
 $('#optSound').addEventListener('change', (e) => write(SOUND_STORE, e.target.checked ? 'on' : 'off'));
 $('#fullscreen').addEventListener('click', toggleFullscreen);
+
+themeButtons([$('#themeToggle'), $('#themeToggleHome')], (t) => (t === 'light' ? 'Tmavé zobrazení' : 'Světlé zobrazení'));
 
 function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen();
@@ -168,25 +170,51 @@ function renderResults() {
   const key = `${s.pos}|${s.startedAt}`;
   if (key === resultsKey) return; // don't replay the reveal on unrelated updates
   resultsKey = key;
-  gong();
 
   $('#rPos').textContent = `Výsledky · otázka ${s.pos + 1} z ${s.total}`;
   $('#rPin').textContent = s.pin;
   $('#rText').textContent = s.question.text;
   const rows = s.results ?? [];
-  if (!rows.length) return $('#rBars').replaceChildren(el('p', { className: 'empty' }, 'Nikdo nehlasoval.'));
-  const step = 0.6;
-  // reveal from the lowest rank up; the winner's row lands last
+  if (!rows.length) {
+    $('#rWin').replaceChildren(el('p', { className: 'empty' }, 'Nikdo nehlasoval.'));
+    $('#rBars').replaceChildren();
+    return;
+  }
+  const total = Math.max(1, s.voted, rows.reduce((n, r) => n + r.votes, 0));
+  const pct = (v) => Math.round((v / total) * 100);
+  const winners = rows.filter((r) => r.rank === 1);
+  const runners = rows.filter((r) => r.rank !== 1).slice(0, 4);
+  const max = rows[0].votes;
+  const step = 0.45;
+  // runners-up land first (lowest rank first), a beat of "A nejspíš…", then the winner wipes in
+  const t = runners.length * step + 1.1;
   $('#rBars').replaceChildren(
-    ...rows.map((r, i) =>
-      el('li', { className: r.rank === 1 ? 'win' : '', style: { '--delay': `${(rows.length - 1 - i) * step + (r.rank === 1 ? 0.5 : 0)}s` } },
+    ...runners.map((r, i) =>
+      el('li', { style: { '--delay': `${(runners.length - 1 - i) * step}s`, '--pct': `${(r.votes / max) * 100}%` } },
         el('span', { className: 'n' }, `${r.rank}.`),
         el('span', { className: 'nm' }, r.person),
-        el('span', { className: 'v' }, `${r.votes} ${votesWord(r.votes)}`),
+        el('span', { className: 'mini' }, el('i')),
+        el('span', { className: 'v' }, `${r.votes} ${votesWord(r.votes)} · ${pct(r.votes)} %`),
       ),
     ),
   );
+  const w = winners[0];
+  $('#rWin').className = `spot${winners.length > 1 ? ' tie' : ''}`;
+  $('#rWin').style.setProperty('--t', `${t}s`);
+  $('#rWin').replaceChildren(
+    el('p', { className: 'tease', 'aria-hidden': 'true' }, 'A nejspíš…'),
+    el('div', { className: 'who' },
+      el('h2', { className: 'head ruled' }, winners.map((r) => r.person).join(' & ')),
+      el('div', { className: 'share', style: { '--pct': `${pct(w.votes)}%` } },
+        el('span', { className: 'bar' }, el('i')),
+        el('span', { className: 'v' }, `${winners.length > 1 ? 'remíza · ' : ''}${w.votes} ${votesWord(w.votes)} · ${pct(w.votes)} %`),
+      ),
+    ),
+  );
+  clearTimeout(gongTimer);
+  gongTimer = setTimeout(gong, t * 1000);
 }
+let gongTimer = null;
 
 const votesWord = (n) => (n === 1 ? 'hlas' : n >= 2 && n <= 4 ? 'hlasy' : 'hlasů');
 
@@ -202,6 +230,19 @@ function renderFinal(prev) {
   $('#fChampSub').textContent = sum.championWins
     ? `Vyhrál/a ${sum.championWins} ${sum.championWins === 1 ? 'otázku' : sum.championWins <= 4 ? 'otázky' : 'otázek'} z ${sum.questions.length}.`
     : '';
+  // who else kept winning: tally wins per person, champions excluded
+  const wins = new Map();
+  for (const q of sum.questions) for (const p of q.winners) wins.set(p, (wins.get(p) ?? 0) + 1);
+  const next = [...wins].filter(([p]) => !sum.champions.includes(p)).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'cs')).slice(0, 3);
+  $('#fPodium').replaceChildren(
+    ...next.map(([p, n], i) =>
+      el('li', { style: { '--delay': `${0.6 + i * 0.15}s` } },
+        el('span', { className: 'n' }, `${i + 2}.`),
+        el('span', { className: 'nm' }, p),
+        el('span', { className: 'v' }, `${n} ${n === 1 ? 'otázka' : n <= 4 ? 'otázky' : 'otázek'}`),
+      ),
+    ),
+  );
   $('#fList').replaceChildren(
     ...sum.questions.map((q, i) =>
       el('li', { style: { '--delay': `${0.3 + i * 0.07}s` } },

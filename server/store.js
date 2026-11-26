@@ -4,6 +4,7 @@ import path from 'node:path';
 
 export function createStore(dir) {
   const stateFile = path.join(dir, 'state.json');
+  const dataFile = path.join(dir, 'data.json');
   const gamesDir = path.join(dir, 'games');
   fs.mkdirSync(gamesDir, { recursive: true });
 
@@ -17,6 +18,18 @@ export function createStore(dir) {
   let pending = null;
 
   return {
+    /** People/questions saved from the admin panel; null when never saved. */
+    loadData() {
+      try {
+        return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+      } catch (e) {
+        if (e.code !== 'ENOENT') console.error(`data.json ve stavu nejde načíst (${e.message}), používám výchozí`);
+        return null;
+      }
+    },
+    saveData(value) {
+      writeAtomic(dataFile, value);
+    },
     load() {
       try {
         return JSON.parse(fs.readFileSync(stateFile, 'utf8'));

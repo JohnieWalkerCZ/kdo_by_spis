@@ -4,34 +4,45 @@ import { ANIMALS, COLORS } from './animals.js';
 
 export const VOTE_GRACE_MS = 300;
 
-/** Validate data.json content; throws with a readable message. */
+export const LIMITS = { people: 100, name: 60, questions: 200, question: 200 };
+
+/** Validate people/questions/settings (data.json or the admin panel); throws with a readable Czech message. */
 export function validateData(data) {
   const errors = [];
-  if (!Array.isArray(data?.people) || data.people.length < 2) errors.push('"people" musí být pole s alespoň 2 jmény');
-  if (!Array.isArray(data?.questions) || data.questions.length < 1) errors.push('"questions" musí obsahovat alespoň 1 otázku');
+  const people = Array.isArray(data?.people) ? data.people.map((p) => (typeof p === 'string' ? p.trim() : p)) : null;
+  if (!people || people.length < 2) errors.push('potřebuju aspoň 2 hráče');
+  else if (people.length > LIMITS.people) errors.push(`maximálně ${LIMITS.people} hráčů`);
   const seen = new Set();
-  for (const p of data?.people ?? []) {
-    if (typeof p !== 'string' || !p.trim()) errors.push(`neplatné jméno: ${JSON.stringify(p)}`);
-    else if (seen.has(p)) errors.push(`duplicitní jméno: ${p}`);
+  for (const p of people ?? []) {
+    if (typeof p !== 'string' || !p) errors.push(`neplatné jméno: ${JSON.stringify(p)}`);
+    else if (p.length > LIMITS.name) errors.push(`jméno je moc dlouhé: ${p.slice(0, 20)}…`);
+    else if (seen.has(p)) errors.push(`jméno je tam dvakrát: ${p}`);
     else seen.add(p);
   }
+  if (!Array.isArray(data?.questions) || data.questions.length < 1) errors.push('potřebuju aspoň 1 otázku');
+  else if (data.questions.length > LIMITS.questions) errors.push(`maximálně ${LIMITS.questions} otázek`);
   for (const [i, q] of (data?.questions ?? []).entries()) {
-    if (typeof q?.text !== 'string' || !q.text.trim()) errors.push(`otázka #${i + 1} nemá text`);
-    if (q?.time !== undefined && !(Number.isInteger(q.time) && q.time >= 5 && q.time <= 600)) {
-      errors.push(`otázka #${i + 1}: "time" musí být celé číslo 5–600`);
+    if (typeof q?.text !== 'string' || !q.text.trim()) errors.push(`otázka ${i + 1} nemá text`);
+    else if (q.text.length > LIMITS.question) errors.push(`otázka ${i + 1} je moc dlouhá`);
+    if (q?.time != null && !(Number.isInteger(q.time) && q.time >= 5 && q.time <= 600)) {
+      errors.push(`otázka ${i + 1}: čas musí být celé číslo 5–600 s`);
     }
   }
-  if (errors.length) throw new Error('Chyba v data.json:\n - ' + errors.join('\n - '));
+  const st = data?.settings ?? {};
+  const settings = {
+    defaultTime: st.defaultTime ?? 20,
+    shuffleQuestions: st.shuffleQuestions ?? false,
+    resultsTop: st.resultsTop ?? 5,
+    autoEndWhenAllVoted: st.autoEndWhenAllVoted ?? false,
+  };
+  if (!(Number.isInteger(settings.defaultTime) && settings.defaultTime >= 5 && settings.defaultTime <= 600)) errors.push('výchozí čas musí být 5–600 s');
+  if (!(Number.isInteger(settings.resultsTop) && settings.resultsTop >= 1 && settings.resultsTop <= 10)) errors.push('počet míst ve výsledcích musí být 1–10');
+  for (const k of ['shuffleQuestions', 'autoEndWhenAllVoted']) if (typeof settings[k] !== 'boolean') errors.push(`${k} musí být ano/ne`);
+  if (errors.length) throw new Error('Chyba v datech:\n - ' + errors.join('\n - '));
   return {
-    people: data.people,
-    questions: data.questions.map((q) => ({ text: q.text.trim(), time: q.time })),
-    settings: {
-      defaultTime: 20,
-      shuffleQuestions: false,
-      resultsTop: 5,
-      autoEndWhenAllVoted: false,
-      ...data.settings,
-    },
+    people,
+    questions: data.questions.map((q) => (q.time != null ? { text: q.text.trim(), time: q.time } : { text: q.text.trim() })),
+    settings,
   };
 }
 

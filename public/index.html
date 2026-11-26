@@ -12,6 +12,7 @@
 </head>
 <body>
   <div class="conn" id="conn" hidden>Spojení se ztratilo, připojuji znovu…</div>
+  <button class="ib theme-fab" id="themeBtn" type="button" aria-label="Přepnout světlé a tmavé zobrazení" title="Světlé / tmavé zobrazení"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
 
   <div class="player">
     <section data-screen="join">
@@ -52,6 +53,7 @@
     <section data-screen="results" hidden>
       <div class="meta"><span id="rPos"></span></div>
       <h2 class="head qtext" id="rText"></h2>
+      <div class="pwin" id="rWin"></div>
       <ol class="board" id="rBars"></ol>
       <p class="note" id="rMine"></p>
       <p class="label">Další otázka za chvíli</p>

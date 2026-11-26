@@ -9,7 +9,9 @@ Hra ve stylu Kahoot na stužkovák. Projektor ukazuje otázku „Kdo by nejspí�
 
 ## Otázky a jména
 
-Uprav [data.json](data.json):
+Nejjednodušší je **admin panel** na `/admin` (stejné heslo jako projektor, odkaz je i na úvodní obrazovce projektoru). Tam upravíš hráče (jedno jméno na řádek), otázky (pořadí, vlastní čas) a nastavení. Uložená data jdou do `/data/data.json` ve volume, takže přežijí restart i rebuild. Platí od další nové hry, rozehraná hra jede dál se svými otázkami.
+
+[data.json](data.json) v repu je jen výchozí obsah pro první spuštění, dokud v adminu nic neuložíš:
 
 ```json
 {

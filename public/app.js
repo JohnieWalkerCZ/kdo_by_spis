@@ -1,4 +1,4 @@
-import { connect, keepAwake, clock, $, el, showScreen, remaining, fold } from './net.js';
+import { connect, keepAwake, clock, $, el, showScreen, remaining, fold, themeButtons } from './net.js';
 
 const STORE = 'kdo-player';
 let saved = load();
@@ -58,6 +58,7 @@ const net = connect({
 });
 
 keepAwake();
+themeButtons([$('#themeBtn')]);
 showScreen(saved.pin ? 'wait' : 'join');
 if (saved.pin) $('#pin').value = saved.pin;
 
@@ -140,24 +141,42 @@ $('#search').addEventListener('input', () => {
 
 const votesWord = (n) => (n === 1 ? 'hlas' : n >= 2 && n <= 4 ? 'hlasy' : 'hlasů');
 
-function bars(rows, mine) {
-  return rows.map((r) =>
-    el('li', { className: `${r.rank === 1 ? 'win' : ''}${r.person === mine ? ' mine' : ''}` },
-      el('span', { className: 'n' }, `${r.rank}.`),
-      el('span', { className: 'nm' }, r.person),
-      el('span', { className: 'v' }, `${r.votes} ${votesWord(r.votes)}`),
-    ),
-  );
-}
-
 function renderResults(s) {
   showScreen('results');
   renderedKey = null;
   $('#rPos').textContent = `Výsledky · otázka ${s.pos + 1} z ${s.total}`;
   $('#rText').textContent = s.question;
   const rows = s.results ?? [];
-  $('#rBars').replaceChildren(...(rows.length ? bars(rows, s.myVote) : [el('li', {}, el('span'), el('span', { className: 'nm' }, 'Nikdo nehlasoval.'))]));
-  const won = rows.some((r) => r.rank === 1 && r.person === s.myVote);
+  const winners = rows.filter((r) => r.rank === 1);
+  const total = Math.max(1, s.voted, rows.reduce((n, r) => n + r.votes, 0));
+  const pct = (v) => Math.round((v / total) * 100);
+  const key = `${s.pos}|${s.startedAt}`;
+  if ($('#rWin').dataset.key !== key) {
+    // rebuild only when the question changes, so the wipe plays once
+    $('#rWin').dataset.key = key;
+    $('#rWin').className = `pwin${winners.length > 1 ? ' tie' : ''}`;
+    $('#rWin').replaceChildren(
+      ...(winners.length
+        ? [
+            el('h3', { className: 'head ruled' }, winners.map((r) => r.person).join(' & ')),
+            el('div', { className: 'share', style: { '--pct': `${pct(winners[0].votes)}%` } },
+              el('span', { className: 'bar' }, el('i')),
+              el('span', { className: 'v' }, `${winners[0].votes} ${votesWord(winners[0].votes)} · ${pct(winners[0].votes)} %`),
+            ),
+          ]
+        : [el('p', { className: 'muted' }, 'Nikdo nehlasoval.')]),
+    );
+  }
+  $('#rBars').replaceChildren(
+    ...rows.filter((r) => r.rank !== 1).map((r) =>
+      el('li', { className: r.person === s.myVote ? 'mine' : '' },
+        el('span', { className: 'n' }, `${r.rank}.`),
+        el('span', { className: 'nm' }, r.person),
+        el('span', { className: 'v' }, `${r.votes} ${votesWord(r.votes)}`),
+      ),
+    ),
+  );
+  const won = winners.some((r) => r.person === s.myVote);
   $('#rMine').classList.toggle('hit', won);
   $('#rMine').textContent = s.myVote
     ? won ? `Trefa! Tipoval/a jsi ${s.myVote}.` : `Tvůj tip: ${s.myVote}`

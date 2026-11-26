@@ -22,8 +22,20 @@ if (!HOST_KEY) {
   process.exit(1);
 }
 
-const data = G.validateData(JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')));
 const store = createStore(STATE_DIR);
+// Admin-panel edits live next to the game state (Docker volume); the bundled data.json is only the first-run default.
+let data = loadData();
+function loadData() {
+  const saved = store.loadData();
+  if (saved) {
+    try {
+      return G.validateData(saved);
+    } catch (e) {
+      console.error(`Uložená data jsou neplatná, používám ${DATA_FILE}:\n${e.message}`);
+    }
+  }
+  return G.validateData(JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')));
+}
 const state = store.load();
 console.log(`Načteno ${data.people.length} lidí, ${data.questions.length} otázek. Rozehraná hra: ${state.game ? state.game.pin + ' (' + state.game.phase + ')' : 'žádná'}`);
 
@@ -232,13 +244,29 @@ const MIME = {
   '.woff2': 'font/woff2',
   '.webmanifest': 'application/manifest+json',
 };
-const ROUTES = { '/': 'index.html', '/host': 'host.html' };
+const ROUTES = { '/': 'index.html', '/host': 'host.html', '/admin': 'admin.html' };
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer',
   'Content-Security-Policy':
     "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; frame-ancestors 'none'",
 };
+
+function readBody(req, limit) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > limit) {
+        reject(new Error('too_large'));
+        req.destroy();
+      } else chunks.push(c);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('error', reject);
+  });
+}
 
 function clientIp(req) {
   if (TRUST_PROXY) {
@@ -271,6 +299,28 @@ const server = http.createServer(async (req, res) => {
     if (m) {
       const body = store.readGame(m[1]);
       return body ? reply(200, body, 'application/json') : reply(404, 'not found');
+    }
+    if (url.pathname === '/api/data') {
+      if (req.method === 'GET') return reply(200, JSON.stringify(data), 'application/json');
+      if (req.method === 'PUT') {
+        let body;
+        try {
+          body = JSON.parse(await readBody(req, 256 * 1024));
+        } catch (e) {
+          return reply(400, JSON.stringify({ error: e.message === 'too_large' ? 'Data jsou moc velká.' : 'Neplatný JSON.' }), 'application/json');
+        }
+        let next;
+        try {
+          next = G.validateData(body);
+        } catch (e) {
+          return reply(400, JSON.stringify({ error: e.message }), 'application/json');
+        }
+        store.saveData(next);
+        data = next; // new games pick it up; a running game keeps its own snapshot
+        console.log(`Admin uložil ${data.people.length} lidí, ${data.questions.length} otázek.`);
+        return reply(200, JSON.stringify(data), 'application/json');
+      }
+      return reply(405, 'method not allowed');
     }
     if (url.pathname === '/api/current' && state.game) {
       return reply(200, JSON.stringify({ pin: state.game.pin, ...G.summary(state.game) }, null, 1), 'application/json');
