@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#120b24">
+  <title>Kdo by nejspíš…</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="conn" id="conn" hidden>Připojování…</div>
+
+  <div class="player">
+    <section data-screen="join">
+      <div class="hero">
+        <h1 class="logo center">Kdo by<br><em>nejspíš…</em></h1>
+        <form id="joinForm" class="stack" autocomplete="off">
+          <label class="muted center" for="pin">Zadej PIN z projektoru</label>
+          <input id="pin" class="input pin-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
+          <button class="btn" type="submit">Připojit se</button>
+          <p class="error center" id="joinError" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <section data-screen="wait" hidden>
+      <div class="hero center">
+        <div class="big-emoji" id="waitEmoji"></div>
+        <div>
+          <p class="muted">Jsi ve hře jako</p>
+          <h2 id="waitName" style="margin:.2em 0 0"></h2>
+        </div>
+        <p class="card"><span class="waiting-dots">Koukej na projektor, hra brzy začne</span></p>
+        <p class="muted" id="waitPlayers"></p>
+      </div>
+    </section>
+
+    <section data-screen="question" hidden>
+      <header class="qhead">
+        <div class="meta">
+          <span id="qPos"></span>
+          <span class="secs" id="qSecs"></span>
+        </div>
+        <div class="timebar" id="qBar"><i></i></div>
+        <h2 class="qtext" id="qText"></h2>
+        <input id="search" class="input" type="search" placeholder="Hledat jméno…" enterkeyhint="search" autocomplete="off">
+      </header>
+      <ul class="people" id="people"></ul>
+      <p class="muted center" id="noMatch" hidden>Nikdo takový</p>
+      <footer class="votebar" id="voteStatus" aria-live="polite"></footer>
+    </section>
+
+    <section data-screen="results" hidden>
+      <p class="muted" id="rPos"></p>
+      <h2 class="qtext" id="rText"></h2>
+      <div class="bars" id="rBars"></div>
+      <p class="card center" id="rMine"></p>
+      <p class="muted center waiting-dots">Čekej na další otázku</p>
+    </section>
+
+    <section data-screen="final" hidden>
+      <div class="hero center">
+        <div class="big-emoji">🎓</div>
+        <h1 class="logo">Konec hry!</h1>
+        <p class="card" id="fChamp"></p>
+        <p class="card" id="fHits"></p>
+        <p class="muted">Díky za hraní a ať se stužkovák vydaří! 🎉</p>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

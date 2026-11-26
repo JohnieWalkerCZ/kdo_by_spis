@@ -1,0 +1,47 @@
+{
+  "people": [
+    "Adam Novák",
+    "Barbora Svobodová",
+    "Cyril Dvořák",
+    "Dana Černá",
+    "Eliška Procházková",
+    "Filip Kučera",
+    "Gabriela Veselá",
+    "Honza Horák",
+    "Ivana Němcová",
+    "Jakub Marek",
+    "Karolína Pokorná",
+    "Lukáš Pospíšil",
+    "Martina Hájková",
+    "Nikola Král",
+    "Ondřej Jelínek",
+    "Petra Růžičková",
+    "Radek Beneš",
+    "Simona Fialová",
+    "Tomáš Sedláček",
+    "Veronika Doležalová"
+  ],
+  "settings": {
+    "defaultTime": 20,
+    "shuffleQuestions": false,
+    "resultsTop": 5,
+    "autoEndWhenAllVoted": false
+  },
+  "questions": [
+    { "text": "Kdo by nejspíš zaspal na vlastní svatbu?" },
+    { "text": "Kdo bude jednou milionář?" },
+    { "text": "Kdo by nejspíš přežil zombie apokalypsu?" },
+    { "text": "Kdo se nejspíš stane slavným?" },
+    { "text": "Kdo by nejspíš vyhrál reality show?" },
+    { "text": "Kdo bude první s dětmi?" },
+    { "text": "Kdo by nejspíš zapomněl, kde zaparkoval?" },
+    { "text": "Kdo se nejspíš odstěhuje do zahraničí?" },
+    { "text": "Kdo bude jednou učit na naší škole?" },
+    { "text": "Kdo by nejspíš snědl jídlo spolubydlícímu z lednice?" },
+    { "text": "Kdo by nejspíš dostal pokutu za rychlou jízdu?" },
+    { "text": "Kdo se nejspíš stane prezidentem/prezidentkou?" },
+    { "text": "Kdo by nejspíš přišel pozdě na maturitu?" },
+    { "text": "Kdo by nejspíš napsal knihu?" },
+    { "text": "Kdo bude na sraze za 10 let nejvíc stejný?", "time": 30 }
+  ]
+}

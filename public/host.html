@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#120b24">
+  <title>Kdo by nejspíš… · projektor</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="host.js"></script>
+</head>
+<body>
+  <div class="conn" id="conn" hidden>Spojení se serverem ztraceno, připojuji znovu…</div>
+
+  <div class="host">
+    <main>
+      <section data-screen="login">
+        <form class="center-col card stack" id="loginForm">
+          <h1 class="logo title-xl">Kdo by <em>nejspíš…</em></h1>
+          <label class="muted" for="key">Heslo projektoru</label>
+          <input id="key" class="input" type="password" autocomplete="current-password" required>
+          <button class="btn" type="submit">Přihlásit</button>
+          <p class="error" id="loginError" role="alert"></p>
+        </form>
+      </section>
+
+      <section data-screen="home" hidden>
+        <div class="center-col stack">
+          <h1 class="logo title-xl">Kdo by <em>nejspíš…</em></h1>
+          <button class="btn" id="newGame">Nová hra</button>
+          <div class="card stack">
+            <h2 style="margin:0">Odehrané hry</h2>
+            <div class="history" id="history"><p class="muted">Zatím žádné.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section data-screen="lobby" hidden>
+        <div class="lobby">
+          <div class="join">
+            <div class="qr"><img id="qr" alt="QR kód pro připojení"></div>
+            <div class="url" id="joinUrl"></div>
+            <div class="pin-label">PIN hry</div>
+            <div class="pin" id="lobbyPin"></div>
+          </div>
+          <div>
+            <div class="players-head"><span class="n" id="lobbyCount">0</span> <span>hráčů připojeno</span></div>
+            <div class="bubbles" id="bubbles"></div>
+            <p class="muted" id="lobbyHint">Naskenuj QR kód nebo otevři adresu a zadej PIN.</p>
+          </div>
+        </div>
+      </section>
+
+      <section data-screen="question" hidden>
+        <div class="qmeta"><span id="qPos"></span><span>PIN <b id="qPin"></b></span></div>
+        <div class="qstage">
+          <h1 class="qbig" id="qText"></h1>
+          <div class="stack" style="align-items:center">
+            <div class="ring" id="ring">
+              <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="prog" id="ringProg" cx="60" cy="60" r="52"/></svg>
+              <div class="num" id="ringNum"></div>
+            </div>
+            <div class="voted">Hlasovalo <b id="voted">0</b> / <span id="votedOf">0</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section data-screen="results" hidden>
+        <div class="qmeta"><span id="rPos"></span><span>PIN <b id="rPin"></b></span></div>
+        <h1 class="results-q" id="rText"></h1>
+        <div class="bars" id="rBars"></div>
+      </section>
+
+      <section data-screen="final" hidden>
+        <div class="final-head">
+          <div class="crown">👑</div>
+          <div class="muted" style="font-size:1.6em;font-weight:700">Hvězda večera</div>
+          <h1 class="champ logo" id="fChamp"></h1>
+          <p class="muted" id="fChampSub" style="font-size:1.3em"></p>
+        </div>
+        <div class="final-list" id="fList"></div>
+      </section>
+    </main>
+
+    <nav class="controls" id="controls" hidden>
+      <span id="ctlPhase" class="row"></span>
+      <span class="spacer"></span>
+      <label><input type="checkbox" id="optSound" checked> Zvuk</label>
+      <label><input type="checkbox" id="optAuto"> Ukončit, když hlasují všichni</label>
+      <button class="btn small ghost" id="fullscreen" title="Celá obrazovka (F)">⛶</button>
+      <button class="btn small ghost" id="menuFinish">Ukončit hru</button>
+      <button class="btn small ghost" id="menuNew">Nová hra</button>
+    </nav>
+  </div>
+</body>
+</html>
